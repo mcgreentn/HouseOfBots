@@ -11,17 +11,18 @@
   },
   "background":
   {
-     "scripts": ["js/jquery-1.11.3.min.js"]
-  }
-  "permissions": [
-   "activeTab"
-   ]
+     "scripts": ["js/jquery-1.11.3.min.js", "js/highlight.js"]
+  },
+  "permissions": 
+  [
+   "activeTab", "tabs"
+   ],
 
   "content_scripts": 
     [
         {
-            "matches":["http://website*"],
-            "js":["js/jquery-1.11.3.min.js"],
+            "matches":["http://*.co/.il/*"],
+            "js":["js/jquery-1.11.3.min.js", "js/highlight.js"],
             "run_at": "document_end"
         }
     ]   
