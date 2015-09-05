@@ -15,7 +15,10 @@ var T = new Twit(creds);
 //  console.log(data)
 //});
 
-
-T.get('statuses/user_timeline', { screen_name: 'realDonaldTrump', count: 100, include_rts: false}, function(err, data, response) {
-  console.log(data)
-});
+for(var i = 0; i < 10; i++)
+{
+	T.get('statuses/user_timeline', { screen_name: 'realDonaldTrump', count: 100, include_rts: false}, function(err, data, response) {
+  	console.log(data)
+	});
+	
+}
