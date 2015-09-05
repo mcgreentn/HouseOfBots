@@ -9,7 +9,20 @@
    "default_icon": "./images/icon.png",
    "default_popup": "./popup.html"
   },
+  "background":
+  {
+     "scripts": ["js/jquery-1.11.3.min.js"]
+  }
   "permissions": [
    "activeTab"
    ]
+
+  "content_scripts": 
+    [
+        {
+            "matches":["http://website*"],
+            "js":["js/jquery-1.11.3.min.js"],
+            "run_at": "document_end"
+        }
+    ]   
 }
