@@ -205,7 +205,7 @@ setTimeout(function() {
         sequences: sequences
     };
 
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < 1; i++) {
         T.post('statuses/update', { status: generate(content, 140) }, function(err, data, response) {
           console.log(data)
         });
