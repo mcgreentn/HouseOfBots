@@ -1,71 +1,41 @@
-//Cmd line args
-var parodyhandle;
-var originhandles = new Array;
-var breakvar = 0;
-process.argv.some(function (val, index, array) {
-	switch(val)
-	{
-		case '-h':
-			console.log("Make a parody twitter!\nUse:\n-h help\n-t \"parodytwitterhandle\" \"[originhandles]\"");
-			breakvar = 1;
-			break;
-		case '-t':
-			console.log("Generating chains...");
-			parodyhandle = array[index+1];
-			if(parodyhandle == null)
-			{
-				console.log("Need more args! See -h for help.");
-				return false;
-			}
-			breakvar = 1;
-			for(var i = 0; i < array.length -4; i++)
-			{
-				originhandles.push(array[index+2+i]);
-			}
-			if(originhandles[0] == null)
-			{
-				console.log("Need more args! See -h for help.");
-			}
-			break;
-	}
-	if(breakvar == 1)
-	{
-		return true;		
-	}
-  //console.log(index + ': ' + val);
-});
-
 var Twit  = require('twit');
 var creds = require('./.creds');
 var T     = new Twit(creds);
 
-var max_id_f = 0;
-function trimLeft(s, c) {
-    var i = 0;
-    while (i < s.length && s[i] === c) {
-        i++;
-    }
-
-    return s.substring(i);
-}
-
-T.get('statuses/user_timeline', { screen_name: 'realDonaldTrump', count: 200, include_rts: true}, function(err, data, response) {
-        var feedString = "";
-        for(var i = 0; i < 200; i++) {
-            feedString = feedString + data[i].text + " ";
-        }
-
-        feedString = feedString.split(" ");
-        var stringArray = new Array();
-        var re = new RegExp(".*@.*")
-        var re2 = new RegExp("-+")
-        for(var j = 0; j < feedString.length; j++)
-        {
-            if(feedString[j].search(re) && feedString[j].search(re2) && feedString[j] != '')
+//Cmd line args
+var parodyHandle;
+var originHandles = [];
+var breakvar = 0;
+process.argv.some(function (val, index, array) {
+    switch(val)
+    {
+        case '-h':
+            console.log("Make a parody twitter!\nUse:\n-h help\n-t \"parodytwitterhandle\" \"[originHandles]\"");
+            breakvar = 1;
+            break;
+        case '-t':
+            console.log("Generating chains...");
+            parodyHandle = array[index+1];
+            if(parodyHandle == null)
             {
-                stringArray.push(feedString[j]);
+                console.log("Need more args! See -h for help.");
+                return false;
             }
-        }
+            breakvar = 1;
+            for(var i = 0; i < array.length -4; i++)
+            {
+                originHandles.push(array[index+2+i]);
+            }
+            if(originHandles[0] == null)
+            {
+                console.log("Need more args! See -h for help.");
+            }
+            break;
+    }
+    if(breakvar == 1) {
+        return true;
+    }
+  //console.log(index + ': ' + val);
 });
 
 var trumpContentNew = {
@@ -94,6 +64,69 @@ var trumpContentNew = {
         }
     ]
 };
+
+var max_id_f = 0;
+function trimLeft(s, c) {
+    var i = 0;
+    while (i < s.length && s[i] === c) {
+        i++;
+    }
+
+    return s.substring(i);
+}
+
+function seed(parodyHandle, originHandles) {
+
+    function upsert(sequences, prev, next) {
+        var done = false;
+        sequences.forEach(function(sequence) {
+            if(sequence.prev === prev && sequence.next === next && !done) {
+                sequence.count = sequence.count + 1;
+                done = true;
+            }
+        });
+        if(!done) {
+            sequences.push( {
+                prev: prev,
+                next: next,
+                count: 1
+            } );
+        }
+
+        return sequences;
+    }
+
+    var sequences = [];
+
+    originHandles.forEach(function(originHandle) {
+        T.get('statuses/user_timeline', { screen_name: originHandle, count: 200, include_rts: true}, function(err, data, response) {
+
+                //for(var i = 0; i < 200; i++) {
+                data.forEach(function(item) {
+                    var currentTweet  = item.text;
+                    var words         = currentTweet.split(" ");
+                    var wordsFiltered = [null];
+                    var re            = new RegExp(".*@.*");
+                    var re2           = new RegExp("-+");
+                    words.forEach(function(word) {
+                        if(word.search(re) && word.search(re2) && word != '') {
+                            wordsFiltered.push(word);
+                        }
+                    });
+                    wordsFiltered.push(null);
+
+                    for (var j = 1; j < wordsFiltered.length; j++) {
+                        var prev = wordsFiltered[j - 1];
+                        var next = wordsFiltered[j];
+
+                        sequences = upsert(sequences, prev, next);
+                    };
+                });
+        });
+    });
+
+    return sequences;
+}
 
 function generate(source, maxLength) {
     function withPrev(source, prev) {
@@ -138,9 +171,7 @@ function generate(source, maxLength) {
         var found     = false;
         sequences.forEach(function(item) {
             secondSum += item.count;
-            console.log(index + " | " + secondSum);
             if(index < secondSum && !found) {
-                console.log(">>>>>" + item.next);
                 output = item;
                 found = true;
             }
@@ -148,7 +179,6 @@ function generate(source, maxLength) {
 
         return output;
     }
-
 
     var words  = withPrev(source, null);
     var output = "";
@@ -159,14 +189,24 @@ function generate(source, maxLength) {
             break;
         }
 
+        if((output + " " + nextWord).length >= maxLength) {
+            return output;
+        }
+
         output += " " + nextWord;
         words = withPrev(source, nextWord);
     }
-    console.log(output);
-
-    //    console.log(withPrev(source, "The"));
-    //    console.log(withNext(source, null));
-    //    console.log(withPrevAndNext(source, "The", "slow"));
+    return output;
 }
 
-//generate(trumpContentNew, 140);
+
+var sequences = seed(parodyHandle, originHandles);
+setTimeout(function() {
+    var content = {
+        sequences: sequences
+    };
+
+    T.post('statuses/update', { status: generate(content, 140) }, function(err, data, response) {
+      console.log(data)
+    });
+}, 5000);
