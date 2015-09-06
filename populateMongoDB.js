@@ -1,3 +1,40 @@
+//Cmd line args
+var parodyhandle;
+var originhandles = new Array;
+var breakvar = 0;
+process.argv.some(function (val, index, array) {
+	switch(val)
+	{
+		case '-h':
+			console.log("Make a parody twitter!\nUse:\n-h help\n-t \"parodytwitterhandle\" \"[originhandles]\"");
+			breakvar = 1;
+			break;
+		case '-t':
+			console.log("Generating chains...");
+			parodyhandle = array[index+1];
+			if(parodyhandle == null)
+			{
+				console.log("Need more args! See -h for help.");
+				return false;
+			}
+			breakvar = 1;
+			for(var i = 0; i < array.length -4; i++)
+			{
+				originhandles.push(array[index+2+i]);
+			}
+			if(originhandles[0] == null)
+			{
+				console.log("Need more args! See -h for help.");
+			}
+			break;
+	}
+	if(breakvar == 1)
+	{
+		return true;		
+	}
+  //console.log(index + ': ' + val);
+});
+
 var Twit  = require('twit');
 var creds = require('./.creds');
 var T     = new Twit(creds);
@@ -13,10 +50,6 @@ function trimLeft(s, c) {
 }
 
 T.get('statuses/user_timeline', { screen_name: 'realDonaldTrump', count: 200, include_rts: true}, function(err, data, response) {
-    console.log(data[0].id)
-    console.log(data[199].id);
-    console.log(data[0].id - data[199].id)
-
         var feedString = "";
         for(var i = 0; i < 200; i++) {
             feedString = feedString + data[i].text + " ";
@@ -33,7 +66,6 @@ T.get('statuses/user_timeline', { screen_name: 'realDonaldTrump', count: 200, in
                 stringArray.push(feedString[j]);
             }
         }
-    console.log(stringArray.length)
 });
 
 var trumpContentNew = {
