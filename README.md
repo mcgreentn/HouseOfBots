@@ -24,7 +24,7 @@ To install House of Bots, simply clone or fork the repo to your computer.  Then,
 
 To run the script, 
 type:
-"node generateData -t <parodyTwitterhandle> <originhandle> <originhandle> <originhandle>"
+  node generateData -t <parodyTwitterhandle> <originhandle> <originhandle> <originhandle>
 
 Note: you can have as many origin handles follow the parody twitter handle as you want.  This means you can pull from as many twitter accounts as desired.  You're welcome.
 
